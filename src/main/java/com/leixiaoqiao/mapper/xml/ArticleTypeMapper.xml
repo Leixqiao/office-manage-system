@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.leixiaoqiao.mapper.ArticleTypeMapper">
+
+    <resultMap id="BaseResultMap" type="com.leixiaoqiao.pojo.ArticleType">
+        <id property="id" column="id"/>
+        <result property="typeName" column="type_name"/>
+    </resultMap>
+
+    <sql id="columns">
+        id,type_name
+    </sql>
+
+    <select id="selectList" resultMap="BaseResultMap">
+      SELECT <include refid="columns"/> from article_type
+    </select>
+</mapper>

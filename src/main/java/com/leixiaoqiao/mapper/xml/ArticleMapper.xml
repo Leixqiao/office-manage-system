@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.leixiaoqiao.mapper.ArticleMapper">
+    <resultMap id="BaseResultMap" type="com.leixiaoqiao.pojo.Article">
+        <id property="id" column="id"/>
+        <result property="articleName" column="article_name"/>
+        <result property="stockNum" column="stock_num"/>
+        <result property="stockUnit" column="stock_unit"/>
+        <result property="articleDescribe" column="article_describe"/>
+        <result property="articleType" column="article_type"/>
+    </resultMap>
+
+    <resultMap id="ArticleAndTypeMap" type="com.leixiaoqiao.pojo.Article" extends="BaseResultMap">
+        <!--关联属性封装-->
+        <association property="type" javaType="com.leixiaoqiao.pojo.ArticleType">
+            <!--如果关联表主键字段不唯一，一般都需要显式封装-->
+            <id property="id" column="type_id"/>
+            <result property="typeName" column="type_name"/>
+        </association>
+    </resultMap>
+
+    <sql id="columns">
+        id,article_name,stock_num,stock_unit,article_type,article_describe
+    </sql>
+    <insert id="insertArticle" parameterType="com.leixiaoqiao.pojo.Article">
+        INSERT INTO
+        article(article_name,stock_num,stock_unit,article_type,article_describe)
+        VALUES(#{articleName},#{stockNum},#{stockUnit},#{articleType},#{articleDescribe})
+    </insert>
+
+    <update id="updateArticle" parameterType="com.leixiaoqiao.pojo.Article">
+      update article
+      set article_name=#{articleName},
+      article_type=#{articleType},
+      article_describe=#{articleDescribe},
+      stock_num=#{stockNum},
+      stock_unit=#{stockUnit}
+      where id=#{id}
+    </update>
+
+    <update id="updateArticleStockNum">
+      update article
+      set
+      stock_num=#{updateNum}
+      where id=#{articleId}
+    </update>
+
+    <delete id="deleteById">
+        delete from article where id=#{id}
+    </delete>
+    <delete id="deleteByIds">
+        delete from article
+        where id in
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!--连表查询中所有表的主键字段必须返回-->
+    <select id="selectJoinTypeAll" resultMap="ArticleAndTypeMap" parameterType="hashmap">
+        SELECT
+        a.id,
+        a.article_name,
+        a.stock_num,
+        a.stock_unit,
+        a.article_type,
+        a.article_describe,
+        ty.id as type_id,
+        ty.type_name
+        FROM
+        article a LEFT JOIN article_type ty ON a.article_type = ty.id
+        <where>
+            <if test="articleName != null and articleName.length!=0">
+                and a.article_name like CONCAT('%',#{articleName},'%')
+            </if>
+            <if test="articleType != 0 and articleType!=null">
+                and a.article_type = #{articleType}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectArticleById" resultMap="BaseResultMap">
+        select <include refid="columns"/>
+        from article
+        where id=#{id}
+    </select>
+
+    <select id="selectArticleAndType" resultMap="ArticleAndTypeMap">
+         SELECT
+        a.id,
+        a.article_name,
+        a.stock_num,
+        a.stock_unit,
+        a.article_type,
+        a.article_describe,
+        ty.id as type_id,
+        ty.type_name
+        FROM
+        article a LEFT JOIN article_type ty ON a.article_type = ty.id
+        where a.id=#{articleId}
+    </select>
+</mapper>

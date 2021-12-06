@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.leixiaoqiao.mapper.ApplyManageMapper">
+
+    <resultMap id="BaseResultMap" type="com.leixiaoqiao.pojo.Apply">
+        <id column="id" property="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="articleId" column="article_id"/>
+        <result property="applyNum" column="apply_num"/>
+        <result property="applyUnit" column="apply_unit"/>
+        <result property="applyState" column="apply_state"/>
+        <result property="applyReason" column="apply_reason"/>
+        <result property="applyDate" column="apply_date"/>
+    </resultMap>
+
+    <resultMap id="ApplyAndUserAndArticleResultMap" type="com.leixiaoqiao.pojo.Apply" extends="BaseResultMap">
+        <association property="user" javaType="com.leixiaoqiao.pojo.User">
+            <id property="id" column="user_id"/>
+            <result property="userName" column="user_name"/>
+        </association>
+        <association property="article" javaType="com.leixiaoqiao.pojo.Article">
+            <id property="id" column="article_id"/>
+            <result property="articleName" column="article_name"/>
+        </association>
+    </resultMap>
+
+    <resultMap id="ApplyAndArticleResultMap" type="com.leixiaoqiao.pojo.Apply" extends="BaseResultMap">
+        <association property="article" javaType="com.leixiaoqiao.pojo.Article">
+            <id property="id" column="article_id"/>
+            <result property="articleName" column="article_name"/>
+            <association property="type" javaType="com.leixiaoqiao.pojo.ArticleType">
+                <id property="id" column="type_id"/>
+                <result property="typeName" column="type_name"/>
+            </association>
+        </association>
+    </resultMap>
+
+    <sql id="columns">
+        id,user_id,article_id,apply_num,apply_unit,apply_reason,apply_date,apply_state
+    </sql>
+
+    <insert id="addApply" parameterType="com.leixiaoqiao.pojo.Apply">
+        INSERT INTO
+        apply(user_id,article_id,apply_num,apply_unit,apply_reason,apply_date,apply_state)
+        VALUES(#{userId},#{articleId},#{applyNum},#{applyUnit},#{applyReason},#{applyDate},#{applyState})
+    </insert>
+
+    <update id="updateApplyState">
+        update apply set apply_state=#{applyState}
+        where id=#{applyId}
+    </update>
+
+    <update id="updateStates">
+        update apply set apply_state=#{state}
+        where id in
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="selectApplyList" resultMap="ApplyAndUserAndArticleResultMap" parameterType="hashmap">
+        select
+            a.id,
+            a.user_id,
+            a.article_id,
+            a.apply_num,
+            a.apply_unit,
+            a.apply_reason,
+            a.apply_date,
+            a.apply_state,
+            u.user_name,
+            ar.article_name
+        from apply a left join user u
+        on a.user_id=u.id
+        left join article ar on a.article_id=ar.id
+        where a.apply_state=0
+        <if test="applyName != '' and applyName.length != 0">
+            and u.user_name like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="applyDate != null">
+            and a.apply_date = #{applyDate}
+        </if>
+    </select>
+
+    <select id="selectMyApplyListByUserId" resultMap="ApplyAndArticleResultMap">
+        SELECT
+        a.id,
+        a.user_id,
+        a.article_id,
+        a.apply_num,
+        a.apply_unit,
+        a.apply_reason,
+        a.apply_date,
+        a.apply_state,
+        ar.article_name,
+        ty.id as type_id,
+        ty.type_name
+        FROM
+        apply a LEFT JOIN article ar ON a.article_id = ar.id
+        LEFT JOIN article_type ty ON ar.article_type = ty.id
+        WHERE a.user_id = #{userId}
+        <if test="articleName != null and articleName.length != 0">
+            and ar.article_name like CONCAT('%',#{articleName},'%')
+        </if>
+        <if test="articleType > 0">
+            and ar.article_type = #{articleType}
+        </if>
+    </select>
+</mapper>
